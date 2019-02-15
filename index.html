@@ -10,7 +10,7 @@
 	<script src="https://code.jquery.com/jquery-3.3.1.min.js" ></script>
   <script src="scripts/mdc.js"></script>
   <script src="scripts/tv4.min.js"></script>
-	
+
 	<style>
     #jsonInput {
       height: 400px;
@@ -25,11 +25,24 @@
 		<div class="col">
       <div class="input-group mb-3">
         <div class="input-group-prepend">
-          <span class="input-group-text" id="basic-addon3">JSON URL</span>
+          <span class="input-group-text" id="basic-addon3">MDC Json URL</span>
         </div>
         <input type="text" class="form-control" id="urlInput" placeholder="https://findemor.github.io/microservices-design-canvas-frame/specs/example.json" aria-describedby="basic-addon3">
       </div>  
-			<textarea id="jsonInput" class="form-control" ></textarea>
+      <textarea id="jsonInput" class="form-control" ></textarea>
+      
+      <!--Error-->
+      <div class="card" id="error" style="display: none;">
+          <div class="card-header alert alert-danger" id="error-title">
+            Input Validation Error
+          </div>
+          <div class="card-body" >            
+            <h6 class="card-subtitle mb-2 text-muted" id="error-desc"></h6>
+            <p class="card-text" id="error-message"></p>
+            <a href="https://findemor.github.io/microservices-design-canvas-frame/specs/schema.json" class="card-link">Json Schema</a>
+            <a href="https://findemor.github.io/microservices-design-canvas-frame/specs/example.json" class="card-link">Json example</a>
+          </div>
+        </div>
     </div>
     
 		<div class="col">
@@ -44,33 +57,59 @@
 	</div>
 	
 	<script>
-  var schema = null;
-try {
-  $.getJSON("E:/mjgs/ws_node/microservices-design-canvas-frame/specs/schema.json", function(data, err) {
-    schema = data;
-  });
-}catch(errr) {
-  console.log(errr);
-}
+  //get json schema
+  $.getJSON("https://findemor.github.io/microservices-design-canvas-frame/specs/schema.json", (schema) => {
+    
+    //url input event
+    $('#urlInput').on('input', function() { 
+      let url = $(this).val();
 
-  $('#urlInput').on('input', function() { 
-    let url = $(this).val();
-    $.getJSON(url, ( data ) => {
-      $( "#jsonInput" ).text(JSON.stringify(data, null, 4));
+      $.getJSON(url, function(data) {
+      })
+      .done(function(data) { 
+        showError({});
+        $( "#jsonInput" ).text(JSON.stringify(data, null, 4));
+        evaluate(data);
+      })
+      .fail(function(jqXHR, textStatus, errorThrown) { 
+        showError({ desc: "Invalid MDC Json URL", message: textStatus });
+      })
+      //.always(function() { console.log('getJSON request ended!'); });
     });
-  });
-	$('#jsonInput').on('input', function() { 
-    let json = $(this).val();
-    let valid = tv4.validate(json, schema);
 
+    //json input event
+    $('#jsonInput').on('input', function() { 
+      let json = $(this).val();
+      evaluate(json);
+    });
 
-    $( "#frame" ).mdc({ json });
+    //show error helper
+    function showError({ desc, message }) {
+      if (desc && message) {
+        $( "#error").show({});
+        $( "#error-desc").text(desc);
+        $( "#error-message").text(message);
+      } else {
+        $( "#error").hide();
+      }
+    }
+
+    //evaluate and print canvas
+    function evaluate(json) {
+      let validation = tv4.validateResult(json, schema);
+      if (validation.valid || !json) {
+        showError({});
+        $( "#frame" ).mdc({ json });
+      } else {
+        showError({ desc: "There are some Json validation errors", message: validation.error.message });
+      }
+    }
   });
 	</script>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
 </html>
