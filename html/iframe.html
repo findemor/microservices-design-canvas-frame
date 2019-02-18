@@ -88,7 +88,7 @@
     //if base64json exist, it is supposed to be a base64 mdc json encoded file
     let encoded_json = getUrlParam("base64json");
     if (encoded_json) {
-      mdc_json = window.atob(encoded_json);
+      mdc_json = JSON.parse(window.atob(encoded_json));
     };
 
     //mdc spec could be recovered from url, for instance: https://findemor.github.io/microservices-design-canvas-frame/specs/example.json
