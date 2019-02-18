@@ -99,7 +99,7 @@
       if (validation.valid || !json) {
         showError({});
         let base64json = Base64.encode(JSON.stringify(json));        
-        $( "iframe" ).attr('src', `html/iframe?data=${base64json}`);
+        $( "iframe" ).attr('src', `html/iframe?base64json=${base64json}`);
       } else {
         showError({ desc: "There are some Json validation errors", message: validation.error.message });
       }
