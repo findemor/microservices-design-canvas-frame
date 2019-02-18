@@ -79,7 +79,7 @@
     //json input event
     $('#jsonInput').on('input', function() { 
       let json = $(this).val();
-      evaluate(json);
+      evaluate(JSON.parse(json));
     });
 
     //show error helper
