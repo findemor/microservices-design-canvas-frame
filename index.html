@@ -49,12 +49,15 @@
         <div class="col-5">
           <div class="input-group mb-3">
             <div class="input-group-prepend">
-              <span class="input-group-text" id="basic-addon3">MDC Json URL</span>
+              <span class="input-group-text" id="basic-addon3">URL</span>
             </div>
             <input type="text" class="form-control" id="urlInput" placeholder="https://findemor.github.io/microservices-design-canvas-frame/specs/example.json" aria-describedby="basic-addon3">
+            <div class="input-group-append">
+              <button class="btn btn-outline-secondary" type="button" id="loadExample">Load Example</button>
+            </div>
           </div>  
           <textarea id="jsonInput" class="form-control" ></textarea>
-          
+                    
           <!--Error-->
           <div class="card" id="error" style="display: none;">
               <div class="card-header alert alert-danger" id="error-title">
@@ -63,90 +66,63 @@
               <div class="card-body" >            
                 <h6 class="card-subtitle mb-2 text-muted" id="error-desc"></h6>
                 <p class="card-text" id="error-message"></p>
-                <a href="https://findemor.github.io/microservices-design-canvas-frame/specs/schema.json" class="card-link">Json Schema</a>
-                <a href="https://findemor.github.io/microservices-design-canvas-frame/specs/example.json" class="card-link">Json example</a>
+                <a href="specs/schema.json" class="card-link">Json Schema</a>
+                <a href="specs/example.json" class="card-link">Json example</a>
               </div>
           </div>
         </div>
       
+        <!-- col derecha-->
         <div class="col-7">
+
+          <!-- Button trigger modal -->
+          <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#shareModal">
+            Share this...
+          </button>
+            
+          <!-- Share Modal -->
+          <div class="modal fade" id="shareModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Share this MDC</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                      <span aria-hidden="true">&times;</span>
+                    </button>
+                  </div>
+                  <div class="modal-body">
+                      <label for="shareURL">iframe with URL</label>
+                      <div class="input-group">
+                        <input id="shareURL" type="text" class="form-control" placeholder="iframe with URL" aria-label="iframe with URL" aria-describedby="button-addon2" readonly>
+                        <div class="input-group-append">
+                          <button class="btn btn-outline-secondary" type="button" id="CopyShareURL">Copy</button>
+                        </div>
+                      </div>
+                      <label for="shareEmbed">iframe with embedded data</label>
+                      <div class="input-group">
+                        <input id="shareEmbed" type="text" class="form-control" placeholder="iframe with embedded data" aria-label="iframe with embedded data" aria-describedby="button-addon2" readonly>
+                        <div class="input-group-append">
+                          <button class="btn btn-outline-secondary" type="button" id="CopyShareEmbed">Copy</button>
+                        </div>
+                      </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <!--<button type="button" class="btn btn-primary">Save changes</button>-->
+                  </div>
+                </div>
+              </div>
+          </div>
+
+          <!-- canvas -->
+          <div id="iframe_container">
           <iframe id="mdc_iframe" width="100%" src="html/iframe.html"></iframe>
+          </div> 
         </div>
       </div>
 	  </div>
 	
-	<script>
-  
-  //get json schema
-  $.getJSON("https://findemor.github.io/microservices-design-canvas-frame/specs/schema.json", (schema) => {
-    
-    //url input event
-    $('#urlInput').on('input', function() { 
-      let url = $(this).val();
-
-      $.getJSON(url, function(data) {
-      })
-      .done(function(data) { 
-        showError({});
-        $( "#jsonInput" ).text(JSON.stringify(data, null, 4));
-        evaluate(data);
-      })
-      .fail(function(jqXHR, textStatus, errorThrown) { 
-        showError({ desc: "Invalid MDC Json URL", message: textStatus });
-      })
-      //.always(function() { console.log('getJSON request ended!'); });
-    });
-
-    //json input event
-    $('#jsonInput').on('input', function() { 
-      let json = $(this).val();
-      evaluate(JSON.parse(json));
-    });
-
-    //show error helper
-    function showError({ desc, message }) {
-      if (desc && message) {
-        $( "#error").show({});
-        $( "#error-desc").text(desc);
-        $( "#error-message").text(message);
-      } else {
-        $( "#error").hide();
-      }
-    }
-
-    //evaluate and print canvas
-    function evaluate(json) {
-      let validation = tv4.validateResult(json, schema);
-      if (validation.valid || !json) {
-        showError({});
-        let base64json = window.btoa(JSON.stringify(json));        
-        $( "iframe" ).attr('src', `html/iframe?base64json=${base64json}`);
-      } else {
-        showError({ desc: "There are some Json validation errors", message: validation.error.message });
-      }
-    }
-  });
-
-  //adjust iframe to content
-  function resizeIFrameToFitContent( iFrame ) {
-    iFrame.width  = iFrame.contentWindow.document.body.scrollWidth;
-    iFrame.height = iFrame.contentWindow.document.body.scrollHeight;
-  }
-
-  window.addEventListener('DOMContentLoaded', function(e) {
-    var iFrame = document.getElementById( 'mdc_iframe' );
-    resizeIFrameToFitContent( iFrame );
-
-    // or, to resize all iframes:
-    var iframes = document.querySelectorAll("iframe");
-    for( var i = 0; i < iframes.length; i++) {
-        resizeIFrameToFitContent( iframes[i] );
-    }
-  });
-	</script>
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	  <script src="scripts/mdc_editor.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
   </body>
