@@ -79,7 +79,7 @@
 
 
   <div>
-    <a id="editor" target="_blank" alt="Open in Editor">edit</a>
+    <a id="editor" target="_blank" alt="Open in MDC Editor">Open in MDC Editor</a>, supported by <a target="_blank" href="https://www.solusoft.es" alt="Solusoft">Solusoft</a>
   </div>
 
   
@@ -105,7 +105,7 @@
     $( "#frame" ).mdc({ url, json: mdc_json });
 
     //setup editor link
-    let editorParam = url ? "url=" + url : "base64json=" + encoded_json;
+    let editorParam = url ? "url=" + encodeURIComponent(url) : "base64json=" + encoded_json;
     $("#editor").attr("href", "http://localhost?" + editorParam);
   </script>
 

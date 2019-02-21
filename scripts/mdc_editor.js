@@ -80,21 +80,6 @@
     
       $(parent).remove(element);
     }
-
-    /// evaluate json and print canvas if it is correct
-    function evalAndPrint({ json, url, schema }) {
-      if ($.type(json) === "string") json = JSON.parse(json);
-      let error = validateJson({ json, url, schema });
-
-      if (!error) {
-        showError({});
-        let base64json = window.btoa(JSON.stringify(json));
-        printCanvas({ base64json });
-        setupShareModal({ base64json, url });
-      } else {
-        showError(error);
-      }
-    }
     
     /**
      * When Url changes...
@@ -104,7 +89,18 @@
       $.getJSON(url)
       .done((json) => { 
         editor.set(json);
-        evalAndPrint({ json, url, schema });
+
+        let error = validateJson({ json, url, schema });
+        if (!error) {
+          showError({});
+          printCanvas({ url });
+
+          let base64json = window.btoa(JSON.stringify(json));
+          setupShareModal({ base64json, url });
+        } else {
+          showError(error);
+        }
+
       })
       .fail((jqXHR, textStatus, errorThrown) => { 
         showError({ desc: "Invalid MDC Json URL", message: textStatus });
@@ -116,7 +112,17 @@
      * When json changes...
      */
     function onJSONInput(json, schema) {
-      evalAndPrint({ json, schema });
+      if ($.type(json) === "string") json = JSON.parse(json);
+      let error = validateJson({ json, schema });
+
+      if (!error) {
+        showError({});
+        let base64json = window.btoa(JSON.stringify(json));
+        printCanvas({ base64json });
+        setupShareModal({ base64json, url });
+      } else {
+        showError(error);
+      }
     }
 
     
@@ -136,8 +142,13 @@
     }
 
     //print canvas from data
-    function printCanvas({ base64json }) {      
-      $( "#mdc_iframe" ).attr('src', `html/iframe.html?base64json=${base64json}`);
+    function printCanvas({ base64json, url }) {      
+      let absoluteUrl = "html/iframe.html";
+      
+      if (base64json) absoluteUrl = getUrl("html/iframe.html?base64json=" + base64json);
+      else if (url) absoluteUrl = getUrl("html/iframe.html?url=" + encodeURIComponent(url));
+
+      $( "#mdc_iframe" ).attr('src', absoluteUrl);
     }
 
 
