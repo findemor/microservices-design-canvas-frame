@@ -77,6 +77,12 @@
     </div>
   </div>
 
+
+  <div>
+    <a id="editor" target="_blank" alt="Open in Editor">edit</a>
+  </div>
+
+  
   <script>
     //if specified, this json will be used
     var mdc_json = null;
@@ -87,6 +93,8 @@
     }
 
     //if base64json exist, it is supposed to be a base64 mdc json encoded file
+    let url = getUrlParam("url");
+    if (url) url = decodeURIComponent(url);
     let encoded_json = getUrlParam("base64json");
     if (encoded_json) {
       mdc_json = JSON.parse(window.atob(encoded_json));
@@ -94,7 +102,11 @@
 
     //mdc spec could be recovered from url, for instance: https://findemor.github.io/microservices-design-canvas-frame/specs/example.json
 
-    $( "#frame" ).mdc({ url: getUrlParam("url"), json: mdc_json });
+    $( "#frame" ).mdc({ url, json: mdc_json });
+
+    //setup editor link
+    let editorParam = url ? "url=" + url : "base64json=" + encoded_json;
+    $("#editor").attr("href", "http://localhost?" + editorParam);
   </script>
 
 </body>

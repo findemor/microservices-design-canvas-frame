@@ -7,8 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
   <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
-    crossorigin="anonymous">
+  <link rel="stylesheet" href="html/bootstrap.min.css">
   <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
   <script src="scripts/mdc.js"></script>
   <script src="scripts/tv4.min.js"></script>
@@ -32,11 +31,11 @@
   <title>Hello, world!</title>
 </head>
 
-<body>
+<body id="mdc_editor">
 
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
     <a class="navbar-brand" href="/">
-      <img src="https://www.solusoft.es/inicio.aspx" width="30" height="30" alt=""> MDC Editor
+      <img src="html/logo_solusoft_verde.png" width="30" height="30" alt=""> MDC Editor
     </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
       aria-expanded="false" aria-label="Toggle navigation">
@@ -70,8 +69,10 @@
         </li>
       </ul>
       <form class="form-inline my-2 my-lg-0">
-        <button class="btn btn-outline-success my-2 my-sm-0">Download Json</button>
+        <button id="downloadBtn" class="btn btn-outline-success my-2 my-sm-0" type="button">Download Json</button>
+        <div id="downloadBtnPlaceholder"></div>
       </form>
+      
     </div>
   </nav>
 
@@ -199,11 +200,34 @@
     </div>
   </div>
 
-  <script src="scripts/mdc_editor.js" crossorigin="anonymous"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-    crossorigin="anonymous"></script>
-  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-    crossorigin="anonymous"></script>
+
+  <script src="scripts/mdc_editor.js"></script>
+  <script src="scripts/popper.min.js"></script>
+  <script src="scripts/bootstrap.min.js"></script>
+
+    
+  <script>
+    function getUrlParam(name) {
+      let results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.search);
+      return (results !== null) ? results[1] || 0 : false;
+    }
+  
+    let encoded_json = getUrlParam("base64json");
+    
+    let param_url = getUrlParam("url");
+    if (param_url) param_url = decodeURIComponent(param_url);
+    let param_json = null;
+    if (encoded_json) {
+      param_json = JSON.parse(window.atob(encoded_json));
+    };
+
+    $("#mdc_editor").mdc_editor({
+      domain: "http://localhost/",
+      url: param_url,
+      json: param_json,
+    });
+  </script>
+  
 </body>
 
 </html>

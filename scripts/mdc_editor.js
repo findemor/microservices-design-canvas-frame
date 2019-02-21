@@ -2,41 +2,17 @@
   //const DOMAIN = "https://findemor.github.io/microservices-design-canvas-frame/";
   //const HOST = location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: '');
   //const DOMAIN = window.location.href;
-  const DOMAIN = "http://localhost/";
+  //const DOMAIN = "http://localhost/";
 
+(function( $ ) {
+ 
+    $.fn.mdc_editor = function(options) {
+      let settings = $.extend({
+        domain: location.protocol+'//'+location.hostname+(location.port ? ':'+location.port: ''),
+        json: null,
+        url: null,
+      }, options );
 
-  //get variables from url
-  var param_json = null;
-  var param_url = null;
-
-  function getUrlParam(name) {
-    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.search);
-    return (results !== null) ? results[1] || 0 : false;
-  }
-
-  //if base64json exist, it is supposed to be a base64 mdc json encoded file
-  let encoded_json = getUrlParam("base64json");
-  if (encoded_json) {
-    param_json = JSON.parse(window.atob(encoded_json));
-  };
-  param_url = getUrlParam("url");
-
-
-  //show error helper
-  function showError({ desc, message }) {
-    if (desc && message) {
-      $( "#error").show({});
-      $( "#error-desc").text(desc);
-      $( "#error-message").text(message);
-    } else {
-      $( "#error").hide();
-    }
-  }
-
-  //get json schema
-  $.getJSON(DOMAIN + "specs/schema.json", (schema) => {
-
-    /* editor */
     const template = {
       "mdcf": "1.0.0",
       "id": "",
@@ -59,130 +35,226 @@
         "eventsPublished": []
       }
     };
+    
+    let editor = null;
 
-    // create the editor
-    const container = document.getElementById("jsonInput");
-    //https://github.com/josdejong/jsoneditor/blob/master/docs/api.md
-    const options = {
-      onChangeJSON: onJSONInput
-    };
-    const editor = new JSONEditor(container, options);
-    editor.set(template);
-    /* end editor */
+    //get json schema
+    $.getJSON(getUrl("specs/schema.json"), (schema) => { 
+      setEditor("jsonInput", template, schema);
 
-    //evaluate url on load
-    if (param_url) onURLInput(param_url);
-    if (param_json) {
-      onJSONInput(param_json);
-      editor.set(param_json);
-    }
+      //configure buttons
+      setupFileButtons(schema);
+      setupShareButtons();
+      setupDownloadButton();
 
-    //evaluate and print canvas
-    function evaluate({ json, url, schema }) {
-      try {
-        showError({});
-        if ($.type(json) === "string") json = JSON.parse(json);
-        let validation = tv4.validateResult(json, schema);
-        if (validation.valid || !json) {
-          let base64json = window.btoa(JSON.stringify(json));        
-          $( "#mdc_iframe" ).attr('src', `html/iframe.html?base64json=${base64json}`);
-          setupShareModal({ base64json, url });        
-        } else {
-          throw Error(validation.error.message);
-        }
-      } catch (message) {
-        showError({ desc: "There are some Json validation errors", message });
+      //initialize from params
+      if (settings.url) {
+        onURLInput(settings.url, schema);
+      } else if (settings.json) {
+        onJSONInput(settings.json, schema);
+        editor.set(settings.json);
       }
-    }
+    });
 
-    function setupShareModal({ url, base64json }) {
-        //Preparamos la caja de compartir
-        if (base64json) {
-          //iframe
-          $( "#shareEmbed" ).val(`<iframe src="${DOMAIN}html/iframe.html?base64json=${base64json}"></iframe>`);
-          $( "#CopyShareEmbed" ).prop('disabled', false);
-          //link
-          $( "#shareLinkEmbed" ).val(`${DOMAIN}html/iframe.html?base64json=${base64json}`);
-          $( "#CopyShareLinkEmbed" ).prop('disabled', false);
-        } else {
-          $( "#CopyShareEmbed" ).prop('disabled', true);
-          $( "#CopyShareLinkEmbed" ).prop('disabled', true);
-        }
-
-        if (url) {
-          //iframe
-          $( "#shareURL" ).val(`<iframe src="${DOMAIN}html/iframe.html?url=${url}"></iframe>`);
-          $( "#CopyShareURL" ).prop('disabled', false);
-          //link
-          $( "#shareLinkURL" ).val(`${DOMAIN}html/iframe.html?url=${url}`);
-          $( "#CopyShareLinkURL" ).prop('disabled', false);
-        } else {
-          $( "#CopyShareURL" ).prop('disabled', true);
-          $( "#CopyShareLinkURL" ).prop('disabled', true);
-        }
-    }
-
-
-      
-    setupUrlButtons();
-    setupShareButtons();
-
-    function setupUrlButtons() {
-      $("#reloadUrl").click(function() {
-        onURLInput($("#urlInput").val());
-      });
-
-      $("#loadExample").click(function() {
-        let url = `${DOMAIN}specs/example.json`;
-        $("#urlInput").val(url);
-        onURLInput(url);
-      });
-
-      $("#onURLInput").click(function() {
-        onURLInput($("#urlInput").val());
+    function setupDownloadButton() {
+      $( "#downloadBtn" ).click(() => {
+        download();
       });
     }
 
     
-    function setupShareButtons() {
-      $( "#CopyShareEmbed" ).click(function() {
-        $( "#shareEmbed" ).select();
-        document.execCommand("copy");
-      });
+    /// download this json file
+    function download() {
 
-      $( "#CopyShareURL" ).click(function() {
-        $( "#shareURL" ).select();
-        document.execCommand("copy");
-      });
-
-      $( "#CopyShareLinkEmbed" ).click(function() {
-        $( "#shareLinkEmbed" ).select();
-        document.execCommand("copy");
-      });
-
-      $( "#CopyShareLinkURL" ).click(function() {
-        $( "#shareLinkURL" ).select();
-        document.execCommand("copy");
-      });
+      let parent = $("#downloadBtnPlaceholder");
+      let filename = "mdc_spec.json";
+      let json = JSON.stringify(editor.get(), null, 4);
+      let element = document.createElement('a');
+      element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(json));
+      element.setAttribute('download', filename);
+    
+      element.style.display = 'none';
+      $(parent).append(element);
+    
+      element.click();
+    
+      $(parent).remove(element);
     }
 
-    function onURLInput(url) {   
+    /// evaluate json and print canvas if it is correct
+    function evalAndPrint({ json, url, schema }) {
+      if ($.type(json) === "string") json = JSON.parse(json);
+      let error = validateJson({ json, url, schema });
 
-      $.getJSON(url, function(data) {
-      })
-      .done(function(json) { 
+      if (!error) {
         showError({});
+        let base64json = window.btoa(JSON.stringify(json));
+        printCanvas({ base64json });
+        setupShareModal({ base64json, url });
+      } else {
+        showError(error);
+      }
+    }
+    
+    /**
+     * When Url changes...
+     */
+    function onURLInput(url, schema) {   
+
+      $.getJSON(url)
+      .done((json) => { 
         editor.set(json);
-        //$( "#jsonInput" ).val(JSON.stringify(json, null, 4));
-        evaluate({ json, url, schema });
+        evalAndPrint({ json, url, schema });
       })
-      .fail(function(jqXHR, textStatus, errorThrown) { 
+      .fail((jqXHR, textStatus, errorThrown) => { 
         showError({ desc: "Invalid MDC Json URL", message: textStatus });
       })
       //.always(function() { console.log('getJSON request ended!'); });
     }
 
-    function onJSONInput(json) {
-      evaluate({ json, schema });
+    /**
+     * When json changes...
+     */
+    function onJSONInput(json, schema) {
+      evalAndPrint({ json, schema });
     }
-    });
+
+    
+    //evaluate and print canvas
+    function validateJson({ json, schema }) {
+      let error = null;
+      try {
+        let validation = tv4.validateResult(json, schema);
+        if (!validation.valid && json) {
+          throw Error(validation.error.message);
+        }
+      } catch (message) {
+        error = { desc: "There are some Json validation errors", message };
+      } finally {
+        return error;
+      }
+    }
+
+    //print canvas from data
+    function printCanvas({ base64json }) {      
+      $( "#mdc_iframe" ).attr('src', `html/iframe.html?base64json=${base64json}`);
+    }
+
+
+    /**
+     * sets sharing fields from input data
+     */
+    function setupShareModal({ url, base64json }) {
+      //Preparamos la caja de compartir
+      if (base64json) {
+        let absoluteUrl = getUrl("html/iframe.html?base64json=" + base64json);
+
+        //iframe
+        $( "#shareEmbed" ).val(`<iframe src="${absoluteUrl}"></iframe>`);
+        $( "#CopyShareEmbed" ).prop('disabled', false);
+        //link
+        $( "#shareLinkEmbed" ).val(absoluteUrl);
+        $( "#CopyShareLinkEmbed" ).prop('disabled', false);
+      } else {
+        $( "#CopyShareEmbed" ).prop('disabled', true);
+        $( "#CopyShareLinkEmbed" ).prop('disabled', true);
+      }
+
+      if (url) {
+        let absoluteUrl = getUrl("html/iframe.html?url=" + encodeURIComponent(url));
+
+        //iframe
+        $( "#shareURL" ).val(`<iframe src="${absoluteUrl}"></iframe>`);
+        $( "#CopyShareURL" ).prop('disabled', false);
+        //link
+        $( "#shareLinkURL" ).val(absoluteUrl);
+        $( "#CopyShareLinkURL" ).prop('disabled', false);
+      } else {
+        $( "#CopyShareURL" ).prop('disabled', true);
+        $( "#CopyShareLinkURL" ).prop('disabled', true);
+      }
+    }
+
+    /**
+     * sets the buttons related to import from file url behaviour
+     */
+    function setupFileButtons(schema) {
+      $("#reloadUrl").click(() => {
+        onURLInput($("#urlInput").val(), schema);
+      });
+
+      $("#loadExample").click(() => {
+        let url = getUrl("specs/example.json");
+        $("#urlInput").val(url);
+        onURLInput(url, schema);
+      });
+
+      $("#onURLInput").click(() => {
+        onURLInput($("#urlInput").val(), schema);
+      });
+    }
+
+    /**
+     * sets the buttons related to sharing functionality
+     */
+    function setupShareButtons() {
+      $( "#CopyShareEmbed" ).click(() => {
+        $( "#shareEmbed" ).select();
+        document.execCommand("copy");
+      });
+
+      $( "#CopyShareURL" ).click(() => {
+        $( "#shareURL" ).select();
+        document.execCommand("copy");
+      });
+
+      $( "#CopyShareLinkEmbed" ).click(() => {
+        $( "#shareLinkEmbed" ).select();
+        document.execCommand("copy");
+      });
+
+      $( "#CopyShareLinkURL" ).click(() => {
+        $( "#shareLinkURL" ).select();
+        document.execCommand("copy");
+      });
+    }
+
+    //show error helper
+    function showError({ desc, message }) {
+      if (desc && message) {
+        $( "#error").show({});
+        $( "#error-desc").text(desc);
+        $( "#error-message").text(message);
+      } else {
+        $( "#error").hide();
+      }
+    }
+
+    /**
+     * Setting up the Json Editor
+     * https://github.com/josdejong/jsoneditor/blob/master/docs/api.md
+     */
+    function setEditor(elementId, template, schema) {
+      // create the editor
+      const container = document.getElementById(elementId);
+      const options = {
+        onChangeJSON: (json) => {
+          onJSONInput(json, schema)
+        }
+      };
+      editor = new JSONEditor(container, options);
+      editor.set(template);
+    }
+
+    /**
+     * Build the absolute Url from rel
+     */
+    function getUrl(page) {
+      return settings.domain + page;
+    }
+
+    //for chaining
+    return this;
+  };
+
+}( jQuery ));
