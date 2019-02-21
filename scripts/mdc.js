@@ -21,6 +21,11 @@
 
     //process content
     function processContent({ container, json }) {
+      let link = null;
+      if (json.url) {
+        link = `<a target="_blank" href="${json.url}"><img src="https://www.google.com/s2/favicons?domain=${json.url}" title="Link to Microservice's website"/></a>`;
+        container.find("#link").html(link);
+      }
       container.find("#name").text(json.name);
       container.find("#description").text(json.description);
       printList({ ul: container.find("#capabilities"), array: json.capabilities });
